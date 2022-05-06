@@ -4,6 +4,7 @@ import { useQuery, gql } from "@apollo/client";
 import useGqlQuery from "./useGqlQuery";
 import useGqlMutation from "./useGqlMutation";
 import useLazyGqlQuery from "./useLazyGqlQuery";
+import { css } from "styled-components";
 
 const MEMBER_INFO_FRAGMENT = `#graphql
   fragment memberInfo on GqlMember {
@@ -48,6 +49,13 @@ const DIET_MUTATION = `#graphql
   }
 `;
 
+const DELETE_MEMBER = `#graphql
+  mutation ($id: ID!) {
+    deleteMember: deleteX(id: $id)
+  }
+  
+`;
+
 function App() {
   const { data: members = [], refetch } = useGqlQuery(MEMBERS_QUERY);
   const [addMember] = useGqlMutation();
@@ -63,19 +71,27 @@ function App() {
     "toggleDiet"
   );
 
+  const [deleteMemeber, { data3 }] = useLazyGqlQuery(
+    DELETE_MEMBER,
+    undefined,
+    "deleteMember"
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
     addMember(
       ADD_MEMBER,
       {
-        name: e.target[0].value,
-        part: e.target[1].value,
+        part: e.target[0].value,
+        name: e.target[1].value,
       },
       (res) => {
         console.log(res);
         refetch();
       }
     );
+
+    e.target[1].value = "";
   };
 
   const isMemberOnDiet = async (memberId) => {
@@ -88,12 +104,17 @@ function App() {
     const { isOnDiet } = await toggleDietStatus({ id: memberId });
   };
 
+  const expelMember = async (e, memberId) => {
+    e.stopPropagation();
+    await deleteMemeber({ id: memberId });
+    refetch();
+  };
+
   return (
     <Container>
       <h1>글큐나!</h1>
       <form action="" onSubmit={(e) => handleSubmit(e)}>
         <label htmlFor="">스터디원 추가하기</label>
-        <input type="text" placeholder="이름" />
         <select name="" id="">
           <option value="WEB">웹</option>
           <option value="DESIGN">디자인</option>
@@ -102,6 +123,7 @@ function App() {
           <option value="ANDROID">안드</option>
           <option value="iOS">아요</option>
         </select>
+        <input type="text" placeholder="이름" />
       </form>
 
       <h2>스터디원 리스트</h2>
@@ -113,6 +135,9 @@ function App() {
             <DietBtn onClick={(e) => toggleDiet(e, id)}>
               다이어트 시키기
             </DietBtn>
+            <ExpelBtn onClick={(e) => expelMember(e, id)}>
+              스터디 쫓아내기
+            </ExpelBtn>
           </Member>
         ))}
       </MemberList>
@@ -126,7 +151,7 @@ const Container = styled.main`
   box-shadow: 3px 3px 5px white;
   border-radius: 8px;
   padding: 10px;
-  margin: 0 auto;
+  margin: 35px auto;
 
   display: flex;
   flex-direction: column;
@@ -152,7 +177,7 @@ const Member = styled.li`
   }
 `;
 
-const DietBtn = styled.button`
+const Btn = styled.button`
   all: unset;
   position: absolute;
   bottom: 5px;
@@ -165,6 +190,22 @@ const DietBtn = styled.button`
   color: #3f3f3f;
   border-radius: 18px;
   padding: 5px 10px;
+`;
+
+const DietBtn = styled(Btn)`
+  &:hover {
+    background-color: lightgray;
+    transform: scale(0.95);
+  }
+`;
+const ExpelBtn = styled(Btn)`
+  top: 5px;
+  bottom: unset;
+
+  &:hover {
+    background-color: lightgray;
+    transform: scale(0.95);
+  }
 `;
 
 export default App;
