@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useQuery, gql } from "@apollo/client";
+import { useEffect, useState } from "react";
 import useGqlQuery from "./useGqlQuery";
 import useGqlMutation from "./useGqlMutation";
 import useLazyGqlQuery from "./useLazyGqlQuery";
-import { css } from "styled-components";
 
 const MEMBER_INFO_FRAGMENT = `#graphql
   fragment memberInfo on GqlMember {
@@ -15,7 +13,7 @@ const MEMBER_INFO_FRAGMENT = `#graphql
 `;
 
 const ADD_MEMBER = `#graphql
-  mutation addMember($name: String!, $part: SoptParts!){
+  mutation ($name: String!, $part: SoptParts!){
     addMember: addGqlMember(newInput: { name: $name, part: $part }) {
       ...memberInfo
     }
@@ -33,7 +31,7 @@ const MEMBERS_QUERY = `#graphql
 `;
 
 const DIET_QUERY = `#graphql
-  query memberOnDiet($id: ID!) {
+  query ($id: ID!) {
     memberOnDiet: getGqlMember(id: $id) {
       isOnDiet
       name
@@ -42,7 +40,7 @@ const DIET_QUERY = `#graphql
 `;
 
 const DIET_MUTATION = `#graphql
-  mutation toggleDiet($id: ID!) {
+  mutation ($id: ID!) {
     toggleDiet: toggleDietStatus(id: $id) {
       isOnDiet
     }
@@ -58,24 +56,16 @@ const DELETE_MEMBER = `#graphql
 
 function App() {
   const { data: members = [], refetch } = useGqlQuery(MEMBERS_QUERY);
-  const [addMember] = useGqlMutation();
+  const [addMember] = useGqlMutation("addMember");
   const [getDietStatus, { data1 }] = useLazyGqlQuery(
     DIET_QUERY,
     undefined,
     "memberOnDiet"
   );
 
-  const [toggleDietStatus, { data2 }] = useLazyGqlQuery(
-    DIET_MUTATION,
-    undefined,
-    "toggleDiet"
-  );
+  const [toggleDietStatus] = useGqlMutation("toggleDiet");
 
-  const [deleteMemeber, { data3 }] = useLazyGqlQuery(
-    DELETE_MEMBER,
-    undefined,
-    "deleteMember"
-  );
+  const [deleteMemeber] = useGqlMutation("deleteMember");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -101,18 +91,18 @@ function App() {
 
   const toggleDiet = async (e, memberId) => {
     e.stopPropagation();
-    const { isOnDiet } = await toggleDietStatus({ id: memberId });
+    await toggleDietStatus(DIET_MUTATION, { id: memberId });
   };
 
   const expelMember = async (e, memberId) => {
     e.stopPropagation();
-    await deleteMemeber({ id: memberId });
+    await deleteMemeber(DELETE_MEMBER, { id: memberId });
     refetch();
   };
 
   return (
     <Container>
-      <h1>글큐나!</h1>
+      <h1>나커박 글큐나 클라이언트 실습</h1>
       <form action="" onSubmit={(e) => handleSubmit(e)}>
         <label htmlFor="">스터디원 추가하기</label>
         <select name="" id="">
@@ -156,6 +146,15 @@ const Container = styled.main`
   display: flex;
   flex-direction: column;
   gap: 30px;
+
+  & > h1 {
+    margin: 0 auto;
+    color: #6d0d2d;
+  }
+
+  & > form label {
+    display: block;
+  }
 `;
 
 const MemberList = styled.ul`

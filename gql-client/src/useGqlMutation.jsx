@@ -5,7 +5,7 @@ const client = axios.create({
   baseURL: "http://localhost:4000",
 });
 
-function useGqlMutation() {
+function useGqlMutation(queryName) {
   const trigger = useCallback(async (query, variables, onCompleted) => {
     try {
       const result = await client.post(
@@ -22,7 +22,7 @@ function useGqlMutation() {
         }
       );
       console.log(result);
-      onCompleted(result.data.data.addMember);
+      onCompleted(result.data.data[queryName]);
     } catch (error) {
       console.log(error);
     }
