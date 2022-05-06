@@ -21,8 +21,7 @@ function useGqlMutation(queryName) {
           },
         }
       );
-      console.log(result);
-      onCompleted(result.data.data[queryName]);
+      onCompleted && onCompleted(result.data.data[queryName]);
     } catch (error) {
       console.log(error);
     }

@@ -2,66 +2,29 @@ import styled from "styled-components";
 import { useEffect, useState } from "react";
 import useGqlQuery from "./useGqlQuery";
 import useGqlMutation from "./useGqlMutation";
-import useLazyGqlQuery from "./useLazyGqlQuery";
-
-const MEMBER_INFO_FRAGMENT = `#graphql
-  fragment memberInfo on GqlMember {
-    id
-    name
-    part
-  }
-`;
-
-const ADD_MEMBER = `#graphql
-  mutation ($name: String!, $part: SoptParts!){
-    addMember: addGqlMember(newInput: { name: $name, part: $part }) {
-      ...memberInfo
-    }
-  }
-  ${MEMBER_INFO_FRAGMENT}
-`;
-
-const MEMBERS_QUERY = `#graphql
-  query {
-    members: getAllGqlMembers {
-      ...memberInfo
-    }
-  } 
-  ${MEMBER_INFO_FRAGMENT}
-`;
-
-const DIET_QUERY = `#graphql
-  query ($id: ID!) {
-    memberOnDiet: getGqlMember(id: $id) {
-      isOnDiet
-      name
-    }
-  }
-`;
-
-const DIET_MUTATION = `#graphql
-  mutation ($id: ID!) {
-    toggleDiet: toggleDietStatus(id: $id) {
-      isOnDiet
-    }
-  }
-`;
-
-const DELETE_MEMBER = `#graphql
-  mutation ($id: ID!) {
-    deleteMember: deleteX(id: $id)
-  }
-  
-`;
+import {
+  MEMBERS_QUERY,
+  ADD_MEMBER,
+  DIET_MUTATION,
+  DIET_QUERY,
+  DELETE_MEMBER,
+} from "./queries";
 
 function App() {
-  const { data: members = [], refetch } = useGqlQuery(MEMBERS_QUERY);
-  const [addMember] = useGqlMutation("addMember");
-  const [getDietStatus, { data1 }] = useLazyGqlQuery(
+  const { data: members = [], refetch } = useGqlQuery(
+    MEMBERS_QUERY,
+    undefined,
+    "members"
+  );
+
+  const [getDietStatus, { data }] = useGqlQuery(
     DIET_QUERY,
     undefined,
-    "memberOnDiet"
+    "memberOnDiet",
+    true
   );
+
+  const [addMember] = useGqlMutation("addMember");
 
   const [toggleDietStatus] = useGqlMutation("toggleDiet");
 
@@ -91,12 +54,16 @@ function App() {
 
   const toggleDiet = async (e, memberId) => {
     e.stopPropagation();
-    await toggleDietStatus(DIET_MUTATION, { id: memberId });
+    await toggleDietStatus(DIET_MUTATION, { id: memberId }, (res) => {
+      console.log("다이어트 결과", res);
+    });
   };
 
   const expelMember = async (e, memberId) => {
     e.stopPropagation();
-    await deleteMemeber(DELETE_MEMBER, { id: memberId });
+    await deleteMemeber(DELETE_MEMBER, { id: memberId }, (res) => {
+      console.log("쫓겨남?", res);
+    });
     refetch();
   };
 
